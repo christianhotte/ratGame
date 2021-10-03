@@ -8,19 +8,21 @@ public class GameDirector : MonoBehaviour
     //Purpose: Governing core (mechanical) gameplay functions in Play scene
 
     //Classes, Enums & Structs:
-    public enum Suit { Ace, Spade, Diamond, Heart }
-    public enum PileStatus { Neutral, Slappable, Collectible1, Collectible2 }
+    public enum Suit { Spade, Club, Diamond, Heart }
     public enum Player { Player1, Player2 }
     [System.Serializable] public class Card
     {
         //Created: 10-2-21
         //Purpose: Storing data for differentiating individual cards
 
-        //Card Properties:
+        //Core (Static) Properties:
         public Suit suit { get; set; }
         public int number { get; set; }
-        public bool isFaceCard;
+
+        //Meta Properties:
         public Player owner;
+        public bool isFaceCard;
+        public bool isBurned;
     }
 
     //Objects & Components:
@@ -38,8 +40,10 @@ public class GameDirector : MonoBehaviour
 
     //Conditions & Memory Vars:
     [Header("[Temp Exposed]")]
-    public PileStatus pileStatus;            //Determines active behavior when players try to play/slap cards
-    public Player nextToPlay;                //The player who is next up to play a card
+    public bool slappable = false;           //Whether or not the Center Pile is currently slappable
+    public bool collectible = false;         //Whether or not the Center Pile is currently collectible (by the player who's turn it is)
+    public bool gameOver = false;            //Whether or not the game/round has ended
+    public Player turn;                      //The player who's turn it is to play a card
     [ShowOnly] public int faceTriesLeft = 0; //How many tries the current player has left to beat the current Face Card Contest (0 if NA)
 
     //Debug Controls:
@@ -67,7 +71,27 @@ public class GameDirector : MonoBehaviour
     }
     private void Update()
     {
-        
+        //Debug Actions:
+        if (playCard1)
+        {
+            PlayCard(Player.Player1);
+            playCard1 = false;
+        }
+        if (playCard2)
+        {
+            PlayCard(Player.Player2);
+            playCard2 = false;
+        }
+        if (take1)
+        {
+            CollectPile(Player.Player1);
+            take1 = false;
+        }
+        if (take2)
+        {
+            CollectPile(Player.Player2);
+            take2 = false;
+        }
     }
 
     private void GenerateHands()
@@ -81,7 +105,7 @@ public class GameDirector : MonoBehaviour
         hand2 = new List<Card>();
 
         //Generate instance for each card:
-        Suit currentSuit = Suit.Ace;
+        Suit currentSuit = 0;
         for (int s = 0; s < 4; s++)
         {
             for (int n = 1; n <= 13; n++)
@@ -132,16 +156,170 @@ public class GameDirector : MonoBehaviour
     }
     private void PlayCard(Player player)
     {
-        //Function: Plays the top card from the given player's hand to the pile, then processes the results and sets game behavior
+        //Function: Plays the top card from the given player's hand to the pile, then processes the results and sets game behavior based on certain conditions
 
+        //Get card and move it from player hand:
         Card playedCard;
-        if (player == Player.Player1)
+        if (player == Player.Player1) //Remove card from top of hand
         {
             playedCard = hand1[0];
+            hand1.RemoveAt(0);
         }
-        else
+        else //Remove card from top of hand
         {
             playedCard = hand2[0];
+            hand2.RemoveAt(0);
         }
+
+        //Check where to place card in pile (in case it has been placed out of turn):
+        if (player == turn && !collectible) //Card is played by correct player
+        {
+            pile.Insert(0, playedCard); //Add card to top of pile
+            Debug.Log(player + " played " + playedCard.number + " of " + playedCard.suit + "s");
+        }
+        else //Card is played by wrong player (or while pile is collectible)
+        {
+            playedCard.isBurned = true;
+            pile.Add(playedCard); //Add card to bottom of pile
+            Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
+            return;
+        }
+
+        //Determine which player goes next:
+        Player lastTurn = turn;
+        ToggleTurn(); //Initially assume that turn order will continue as normal
+        if (playedCard.isFaceCard) //Begin new Face Card Contest
+        {
+            if (playedCard.number == 1) faceTriesLeft = 4;
+            else faceTriesLeft = playedCard.number - 10;
+        }
+        else //Continue Face Card Contest or normal play
+        {
+            if (faceTriesLeft > 0) //Continue ongoing Face Card Contest
+            {
+                faceTriesLeft--; //Indicate that a non-face card has been placed
+                if (faceTriesLeft == 0) collectible = true; //End Face Card Contest
+                else ToggleTurn(); //The same player continues playing until contest is resolved
+            }
+        }
+        if (turn == Player.Player1 && hand1.Count == 0 || //Special condition for if Player 1 is out of cards
+            turn == Player.Player2 && hand2.Count == 0)   //Special condition for if Player 2 is out of cards
+        {
+            //If a player is out of cards, their opponent plays out their hand until the pile is fully collected
+            turn = lastTurn;
+        }
+
+        //Check slappability:
+        slappable = false;
+        Card c1 = playedCard;
+        if (redTens) //Special check for if red tens rule is enabled
+        {
+            if (c1.suit == Suit.Diamond && c1.number == 10 ||
+                c1.suit == Suit.Heart && c1.number == 10)
+            {
+                slappable = true;
+                Debug.Log("Slap opportunity: Red Ten");
+            }
+        }
+        if (pile.Count > 1 && !slappable) //Pile is large enough to check for doubles
+        {
+            Card c2 = pile[1];
+            if (c1.number == c2.number) //Check for double
+            {
+                slappable = true;
+                Debug.Log("Slap opportunity: Double");
+            }
+            else if (pile.Count > 2) //Pile is large enough to check for sandwiches and runs
+            {
+                Card c3 = pile[2];
+                if (c1.number == c3.number) //Check for sandwich
+                {
+                    slappable = true;
+                    Debug.Log("Slap opportunity: Sandwich");
+                }
+                else if (c1.number == c2.number - 1 || //Check for forward run
+                         c1.number == 1 && c2.number == 13) //Account for king -> ace 
+                {
+                    if (c2.number == c3.number - 1 ||
+                        c2.number == 1 && c3.number == 13)
+                    {
+                        slappable = true;
+                        Debug.Log("Slap opportunity: Run");
+                    }
+                }
+                else if (c1.number == c2.number + 1 || //Check for backward run
+                         c1.number == 13 && c2.number == 1) //Account for ace -> king
+                {
+                    if (c2.number == c3.number + 1 ||
+                        c2.number == 13 && c3.number == 1)
+                    {
+                        slappable = true;
+                        Debug.Log("Slap opportunity: Reverse Run");
+                    }
+                }
+            }
+        }
+    }
+    private void CollectPile(Player player)
+    {
+        //Function: Attempts to claim the pile for the given player, combining the pile with their deck if successful and checking for a win condition
+
+        //Check if collection is invalid:
+        if (!slappable && !collectible || !slappable && player != turn) //Pile is not slappable or collectible by this player
+        {
+            //Burn a card:
+            Card burnedCard;
+            if (player == Player.Player1) //Remove card from top of hand
+            {
+                burnedCard = hand1[0];
+                hand1.RemoveAt(0);
+            }
+            else //Remove card from top of hand
+            {
+                burnedCard = hand2[0];
+                hand2.RemoveAt(0);
+            }
+            burnedCard.isBurned = true;
+            pile.Add(burnedCard); //Add burned card to bottom of pile
+            Debug.Log(player + " burned " + burnedCard.number + " of " + burnedCard.suit + "s");
+            return;
+        }
+
+        //Collection cleanup:
+        turn = player; //Ensure the player who collects the pile goes first
+        faceTriesLeft = 0; //Break out of Face Card Contest mode if applicable
+        slappable = false;
+        collectible = false;
+
+        //Add cards to collecting player's hand:
+        for (int n = 0; n < pile.Count;)
+        {
+            Card collectedCard = pile[pile.Count - 1]; //Remove card from bottom of pile
+            collectedCard.isBurned = false;
+            collectedCard.owner = turn;
+            if (player == Player.Player1) hand1.Add(collectedCard); //Add card to bottom of player hand
+            else hand2.Add(collectedCard);                          //Add card to bottom of player hand
+            pile.Remove(collectedCard);
+        }
+        Debug.Log(player + " collected the pile");
+
+        //Check for win condition:
+        if (hand1.Count == 0) //Player 1 is out of cards, Player 2 wins
+        {
+            gameOver = true;
+            Debug.Log("Player2 won");
+        }
+        else if (hand2.Count == 0) //Player 2 is out of cards, Player 1 wins
+        {
+            gameOver = true;
+            Debug.Log("Player1 won");
+        }
+    }
+    private void ToggleTurn()
+    {
+        //Function: Switches which player is currently going next
+
+        if (turn == Player.Player1) turn = Player.Player2;
+        else turn = Player.Player1;
     }
 }
