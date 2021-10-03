@@ -40,14 +40,15 @@ public class GameDirector : MonoBehaviour
 
     //Conditions & Memory Vars:
     [Header("[Temp Exposed]")]
-    public bool slappable = false;           //Whether or not the Center Pile is currently slappable
-    public bool collectible = false;         //Whether or not the Center Pile is currently collectible (by the player who's turn it is)
-    public bool gameOver = false;            //Whether or not the game/round has ended
+    [ShowOnly] public bool slappable = false;           //Whether or not the Center Pile is currently slappable
+    [ShowOnly] public bool collectible = false;         //Whether or not the Center Pile is currently collectible (by the player who's turn it is)
+    [ShowOnly] public bool gameOver = false;            //Whether or not the game/round has ended
     public Player turn;                      //The player who's turn it is to play a card
     [ShowOnly] public int faceTriesLeft = 0; //How many tries the current player has left to beat the current Face Card Contest (0 if NA)
 
     //Debug Controls:
     [Space()]
+    public bool enableLogs;
     public bool playCard1 = false;
     public bool playCard2 = false;
     public bool take1 = false;
@@ -58,7 +59,7 @@ public class GameDirector : MonoBehaviour
         //Initialize as sole director:
         if (director == null)
         {
-            DontDestroyOnLoad(gameObject);
+            //DontDestroyOnLoad(gameObject);
             director = this;
         }
         else
@@ -154,7 +155,8 @@ public class GameDirector : MonoBehaviour
         }
         return shuffledCards;
     }
-    private void PlayCard(Player player)
+
+    public void PlayCard(Player player)
     {
         //Function: Plays the top card from the given player's hand to the pile, then processes the results and sets game behavior based on certain conditions
 
@@ -162,11 +164,13 @@ public class GameDirector : MonoBehaviour
         Card playedCard;
         if (player == Player.Player1) //Remove card from top of hand
         {
+            if (hand1.Count == 0) return; //Exit if Player1 has no cards to play
             playedCard = hand1[0];
             hand1.RemoveAt(0);
         }
         else //Remove card from top of hand
         {
+            if (hand2.Count == 0) return; //Exit if Player2 has no cards to play
             playedCard = hand2[0];
             hand2.RemoveAt(0);
         }
@@ -175,13 +179,13 @@ public class GameDirector : MonoBehaviour
         if (player == turn && !collectible) //Card is played by correct player
         {
             pile.Insert(0, playedCard); //Add card to top of pile
-            Debug.Log(player + " played " + playedCard.number + " of " + playedCard.suit + "s");
+            if (enableLogs) Debug.Log(player + " played " + playedCard.number + " of " + playedCard.suit + "s");
         }
         else //Card is played by wrong player (or while pile is collectible)
         {
             playedCard.isBurned = true;
             pile.Add(playedCard); //Add card to bottom of pile
-            Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
+            if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
             return;
         }
 
@@ -192,22 +196,23 @@ public class GameDirector : MonoBehaviour
         {
             if (playedCard.number == 1) faceTriesLeft = 4;
             else faceTriesLeft = playedCard.number - 10;
+            if (enableLogs) Debug.Log("Face-Off initiated, " + turn + " has " + faceTriesLeft + " tries to play a face card");
         }
         else //Continue Face Card Contest or normal play
         {
             if (faceTriesLeft > 0) //Continue ongoing Face Card Contest
             {
                 faceTriesLeft--; //Indicate that a non-face card has been placed
-                if (faceTriesLeft == 0) collectible = true; //End Face Card Contest
+                if (faceTriesLeft == 0) //End Face Card Contest
+                {
+                    collectible = true;
+                    if (enableLogs) Debug.Log(turn + " has won the Face-Off, and may now collect the pile");
+                }
                 else ToggleTurn(); //The same player continues playing until contest is resolved
             }
         }
-        if (turn == Player.Player1 && hand1.Count == 0 || //Special condition for if Player 1 is out of cards
-            turn == Player.Player2 && hand2.Count == 0)   //Special condition for if Player 2 is out of cards
-        {
-            //If a player is out of cards, their opponent plays out their hand until the pile is fully collected
-            turn = lastTurn;
-        }
+        if (hand1.Count == 0) turn = Player.Player2;      //If Player1 is out of cards, Player2 must go next
+        else if (hand2.Count == 0) turn = Player.Player1; //If Player2 is out of cards, Player1 must go next
 
         //Check slappability:
         slappable = false;
@@ -218,7 +223,7 @@ public class GameDirector : MonoBehaviour
                 c1.suit == Suit.Heart && c1.number == 10)
             {
                 slappable = true;
-                Debug.Log("Slap opportunity: Red Ten");
+                if (enableLogs) Debug.Log("Slap opportunity: Red Ten");
             }
         }
         if (pile.Count > 1 && !slappable) //Pile is large enough to check for doubles
@@ -227,7 +232,7 @@ public class GameDirector : MonoBehaviour
             if (c1.number == c2.number) //Check for double
             {
                 slappable = true;
-                Debug.Log("Slap opportunity: Double");
+                if (enableLogs) Debug.Log("Slap opportunity: Double");
             }
             else if (pile.Count > 2) //Pile is large enough to check for sandwiches and runs
             {
@@ -235,7 +240,7 @@ public class GameDirector : MonoBehaviour
                 if (c1.number == c3.number) //Check for sandwich
                 {
                     slappable = true;
-                    Debug.Log("Slap opportunity: Sandwich");
+                    if (enableLogs) Debug.Log("Slap opportunity: Sandwich");
                 }
                 else if (c1.number == c2.number - 1 || //Check for forward run
                          c1.number == 1 && c2.number == 13) //Account for king -> ace 
@@ -244,7 +249,7 @@ public class GameDirector : MonoBehaviour
                         c2.number == 1 && c3.number == 13)
                     {
                         slappable = true;
-                        Debug.Log("Slap opportunity: Run");
+                        if (enableLogs) Debug.Log("Slap opportunity: Run");
                     }
                 }
                 else if (c1.number == c2.number + 1 || //Check for backward run
@@ -254,13 +259,13 @@ public class GameDirector : MonoBehaviour
                         c2.number == 13 && c3.number == 1)
                     {
                         slappable = true;
-                        Debug.Log("Slap opportunity: Reverse Run");
+                        if (enableLogs) Debug.Log("Slap opportunity: Reverse Run");
                     }
                 }
             }
         }
     }
-    private void CollectPile(Player player)
+    public void CollectPile(Player player)
     {
         //Function: Attempts to claim the pile for the given player, combining the pile with their deck if successful and checking for a win condition
 
@@ -271,17 +276,19 @@ public class GameDirector : MonoBehaviour
             Card burnedCard;
             if (player == Player.Player1) //Remove card from top of hand
             {
+                if (hand1.Count == 0) return; //Exit if Player1 has no cards to burn
                 burnedCard = hand1[0];
                 hand1.RemoveAt(0);
             }
             else //Remove card from top of hand
             {
+                if (hand2.Count == 0) return; //Exit if Player2 has no cards to burn
                 burnedCard = hand2[0];
                 hand2.RemoveAt(0);
             }
             burnedCard.isBurned = true;
             pile.Add(burnedCard); //Add burned card to bottom of pile
-            Debug.Log(player + " burned " + burnedCard.number + " of " + burnedCard.suit + "s");
+            if (enableLogs) Debug.Log(player + " burned " + burnedCard.number + " of " + burnedCard.suit + "s");
             return;
         }
 
@@ -301,18 +308,18 @@ public class GameDirector : MonoBehaviour
             else hand2.Add(collectedCard);                          //Add card to bottom of player hand
             pile.Remove(collectedCard);
         }
-        Debug.Log(player + " collected the pile");
+        if (enableLogs) Debug.Log(player + " collected the pile");
 
         //Check for win condition:
         if (hand1.Count == 0) //Player 1 is out of cards, Player 2 wins
         {
             gameOver = true;
-            Debug.Log("Player2 won");
+            if (enableLogs) Debug.Log("Player2 won");
         }
         else if (hand2.Count == 0) //Player 2 is out of cards, Player 1 wins
         {
             gameOver = true;
-            Debug.Log("Player1 won");
+            if (enableLogs) Debug.Log("Player1 won");
         }
     }
     private void ToggleTurn()
