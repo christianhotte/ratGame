@@ -196,7 +196,7 @@ public class GameDirector : MonoBehaviour
         {
             if (playedCard.number == 1) faceTriesLeft = 4;
             else faceTriesLeft = playedCard.number - 10;
-            if (enableLogs) Debug.Log("Face-Off initiated, " + turn + " has " + faceTriesLeft + " tries to play a face card");
+            if (enableLogs) Debug.Log("Faceoff initiated, " + turn + " has " + faceTriesLeft + " tries to play a face card");
         }
         else //Continue Face Card Contest or normal play
         {
@@ -206,7 +206,7 @@ public class GameDirector : MonoBehaviour
                 if (faceTriesLeft == 0) //End Face Card Contest
                 {
                     collectible = true;
-                    if (enableLogs) Debug.Log(turn + " has won the Face-Off, and may now collect the pile");
+                    if (enableLogs) Debug.Log(turn + " has won the faceoff, and may now collect the pile");
                 }
                 else ToggleTurn(); //The same player continues playing until contest is resolved
             }
