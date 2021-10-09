@@ -8,6 +8,8 @@ public class InputManager : MonoBehaviour
     //Purpose: Detecting and translating commands from player input and triggering events in GameDirector
 
     //Classes, Enums & Structs:
+    public enum InputMode {Swipe, Place}
+    public enum Zone {Pile, Hand1, Hand2, None}
     [System.Serializable] public class TouchData
     {
         //Purpose: Object containing data relevant for a touch being actively tracked by the program
@@ -29,18 +31,20 @@ public class InputManager : MonoBehaviour
     private Transform hand1;
     private Transform hand2;
         //NOTE: Zones are used to determine whether a touch will initiate a card pick-up animation
-    private Collider2D pileZone;  //Zone ID = 0
-    private Collider2D hand1Zone; //Zone ID = 1
-    private Collider2D hand2Zone; //Zone ID = 2
+    private Collider2D pileZone;
+    private Collider2D hand1Zone;
+    private Collider2D hand2Zone;
 
     //Settings:
-    [Header("Settings:")]
-    [Range(0, 1)] public float playLine; //Position of line (as percentage of screen space from each player side) players must drag cards past (from hand) in order to play them
-    [Range(0, 1)] public float collectLine; //Position of line (as percentage of screen space from each player side) players must drag cards past (from pile) in order to collect the pile
+    [Header("Settings (player):")]
+    public InputMode inputMode; //Determines how inputs are registered during gameplay.  Swipe Mode: Cards are played when they cross a given threshold; Place Mode: Cards are played when the player lifts their finger
+    [Header("Settings (editor):")]
+    [Range(0, 1)] public float playLine;    //Position of line (as percentage of screen space from each player side) players must drag cards past (from hand) in order to play them (when in swipe mode)
+    [Range(0, 1)] public float collectLine; //Position of line (as percentage of screen space from each player side) players must drag cards past (from pile) in order to collect the pile (when in swipe mode)
 
     //Conditions & Memory Vars:
     private Touch[] touches; //Array of active touch inputs
-    public List<TouchData> touchDataList = new List<TouchData>(); //Companion list to touches array for tracking origin positions (replacement for touch.rawPosition)
+    internal List<TouchData> touchDataList = new List<TouchData>(); //Companion list to touches array for tracking origin positions (replacement for touch.rawPosition)
 
     private void Awake()
     {
@@ -55,7 +59,7 @@ public class InputManager : MonoBehaviour
 
     private void Update()
     {
-        //Parse Touch Arrays:
+        //Detect Input (parse touch arrays):
         touches = Input.touches; //Get most recent array of touches
         if (touches.Length > 0) //TOUCH INPUT:
         {
@@ -99,7 +103,7 @@ public class InputManager : MonoBehaviour
                     data.markedForDisposal = true;
                 }
             }
-            for (int i = 0; i < touchDataList.Count;) //Clean up data list by removing items marked for deletion
+            for (int i = 0; i < touchDataList.Count;) //Very smart cool nifty totally efficient way to clean up list without throwing indexoutofrange errors
             {
                 TouchData data = touchDataList[i]; //Get first item from touchData list
                 if (data.markedForDisposal) touchDataList.RemoveAt(i); //Remove item if marked for deletion
@@ -107,86 +111,36 @@ public class InputManager : MonoBehaviour
             }
         }
 
-        /*if (Input.touchCount > 0) //Check if there is any touch input
-        {
-            for (int i = 0; i < Input.touchCount; i++) //Parse through all active touches in touch array
-            {
-                Touch touch = Input.touches[i];
-
-                switch (touch.phase) //Decide what to do based on phase
-                {
-                    case TouchPhase.Began:
-                        ActiveInput newInput = new ActiveInput();
-                        newInput.position = touch.position;
-                        newInput.originZone = ReadPositionAsZone(touch.position);
-                        newInput.debugIndicator = Instantiate(debugIndicatorPrefab);
-                        newInput.debugIndicator.transform.position = ActualScreenToWorldPoint(newInput.position);
-                        activeInputs.Add(newInput);
-                        break;
-                    case TouchPhase.Moved:
-                        activeInputs[i].position = touch.position;
-                        activeInputs[i].debugIndicator.transform.position = ActualScreenToWorldPoint(activeInputs[i].position);
-                        break;
-                    case TouchPhase.Ended: //Compute potential player actions
-                        ActiveInput thisInput = activeInputs[i];
-                        if (thisInput.originZone == 0) //Card collection actions
-                        {
-                            if (ReadPositionAsZone(touch.position) == 1)
-                            {
-                                GameDirector.director.CollectPile(GameDirector.Player.Player1);
-                            }
-                            else if (ReadPositionAsZone(touch.position) == 2)
-                            {
-                                GameDirector.director.CollectPile(GameDirector.Player.Player2);
-                            }
-                        }
-                        else if (thisInput.originZone == 1) //Player1 play action
-                        {
-                            if (ReadPositionAsZone(touch.position) == 0)
-                            {
-                                GameDirector.director.PlayCard(GameDirector.Player.Player1);
-                            }
-                        }
-                        else if (thisInput.originZone == 2) //Player2 play action
-                        {
-                            if (ReadPositionAsZone(touch.position) == 0)
-                            {
-                                GameDirector.director.PlayCard(GameDirector.Player.Player2);
-                            }
-                        }
-                        Destroy(thisInput.debugIndicator);
-                        activeInputs.Remove(thisInput);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }*/
 
     }
 
+    //INPUT EVENTS:
     private void TouchStarted(TouchData data)
     {
-        Debug.Log("Touch started at " + data.origin);
+        
     }
     private void TouchMoved(TouchData data)
     {
-        //Debug.Log("Touch moved to " + data.position + " by " + data.delta);
+        if (inputMode == InputMode.Swipe)
+        {
+            
+        }
     }
     private void TouchEnded(TouchData data)
     {
-        Debug.Log("Touch ended at " + data.position + " (beginning at " + data.origin + ")");
+        
     }
 
-    private int ReadPositionAsZone(Vector2 position)
+    //UTILITY METHODS:
+    private Zone ReadPositionAsZone(Vector2 position)
     {
-        //Function: Determines which zone, if any, given position is in (and returns result as zone index)
+        //Function: Determines which zone, if any, given position is in (and returns result as zone)
 
         Vector3 realPosition = ActualScreenToWorldPoint(position);
-        if (pileZone.bounds.Contains(realPosition)) return 0;
-        else if (hand1Zone.bounds.Contains(realPosition)) return 1;
-        else if (hand2Zone.bounds.Contains(realPosition)) return 2;
-        else return 3;
+        if (pileZone.bounds.Contains(realPosition)) return Zone.Pile;
+        else if (hand1Zone.bounds.Contains(realPosition)) return Zone.Hand1;
+        else if (hand2Zone.bounds.Contains(realPosition)) return Zone.Hand2;
+        else return Zone.None;
     }
     private float GetPositionOfLine(float lineSetting, Player player)
     {
