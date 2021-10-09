@@ -8,8 +8,6 @@ public class GameDirector : MonoBehaviour
     //Purpose: Governing core (mechanical) gameplay functions in Play scene
 
     //Classes, Enums & Structs:
-    public enum Suit { Spade, Club, Diamond, Heart }
-    public enum Player { Player1, Player2 }
     [System.Serializable] public class Card
     {
         //Created: 10-2-21
@@ -40,11 +38,11 @@ public class GameDirector : MonoBehaviour
 
     //Conditions & Memory Vars:
     [Header("[Temp Exposed]")]
-    [ShowOnly] public bool slappable = false;           //Whether or not the Center Pile is currently slappable
-    [ShowOnly] public bool collectible = false;         //Whether or not the Center Pile is currently collectible (by the player who's turn it is)
-    [ShowOnly] public bool gameOver = false;            //Whether or not the game/round has ended
-    public Player turn;                      //The player who's turn it is to play a card
-    [ShowOnly] public int faceTriesLeft = 0; //How many tries the current player has left to beat the current Face Card Contest (0 if NA)
+    [ShowOnly] public bool slappable = false;   //Whether or not the Center Pile is currently slappable
+    [ShowOnly] public bool collectible = false; //Whether or not the Center Pile is currently collectible (by the player who's turn it is)
+    [ShowOnly] public bool gameOver = false;    //Whether or not the game/round has ended
+    public Player turn;                         //The player who's turn it is to play a card
+    [ShowOnly] public int faceTriesLeft = 0;    //How many tries the current player has left to beat the current Face Card Contest (0 if NA)
 
     //Debug Controls:
     [Space()]

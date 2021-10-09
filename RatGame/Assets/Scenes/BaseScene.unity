@@ -502,7 +502,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugIndicatorPrefab: {fileID: 5726436742651224815, guid: 53c4a598a0f44d24a8609ac7dee15f2c, type: 3}
-  activeInputs: []
+  playLine: 0.2
+  collectLine: 0.4
+  touchOrigins: []
 --- !u!1 &962281251
 GameObject:
   m_ObjectHideFlags: 0
