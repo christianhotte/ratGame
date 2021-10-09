@@ -38,11 +38,11 @@ public class GameDirector : MonoBehaviour
 
     //Conditions & Memory Vars:
     [Header("[Temp Exposed]")]
-    [ShowOnly] public bool slappable = false;   //Whether or not the Center Pile is currently slappable
-    [ShowOnly] public bool collectible = false; //Whether or not the Center Pile is currently collectible (by the player who's turn it is)
-    [ShowOnly] public bool gameOver = false;    //Whether or not the game/round has ended
-    public Player turn;                         //The player who's turn it is to play a card
-    [ShowOnly] public int faceTriesLeft = 0;    //How many tries the current player has left to beat the current Face Card Contest (0 if NA)
+    internal bool slappable = false;   //Whether or not the Center Pile is currently slappable
+    internal bool collectible = false; //Whether or not the Center Pile is currently collectible (by the player who's turn it is)
+    internal bool gameOver = false;    //Whether or not the game/round has ended
+    internal Player turn;              //The player who's turn it is to play a card
+    internal int faceTriesLeft = 0;    //How many tries the current player has left to beat the current Face Card Contest (0 if NA)
 
     //Debug Controls:
     [Space()]

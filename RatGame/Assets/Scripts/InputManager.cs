@@ -8,7 +8,7 @@ public class InputManager : MonoBehaviour
     //Purpose: Detecting and translating commands from player input and triggering events in GameDirector
 
     //Classes, Enums & Structs:
-    public enum InputMode {Swipe, Place}
+    public enum InputMode {Swipe, Drop}
     public enum Zone {Pile, Hand1, Hand2, None}
     [System.Serializable] public class TouchData
     {
@@ -128,8 +128,7 @@ public class InputManager : MonoBehaviour
     //INPUT EVENTS:
     private void TouchStarted(TouchData data)
     {
-        //Process Input Event:
-
+        
     }
     private void TouchMoved(TouchData data)
     {
@@ -173,7 +172,37 @@ public class InputManager : MonoBehaviour
     private void TouchEnded(TouchData data)
     {
         //Process Input Event:
-
+        if (inputMode == InputMode.Drop) //Only process inputs in this phase if drag&drop is enabled
+        {
+            Zone endZone = ReadPositionAsZone(data.position);
+            switch (ReadPositionAsZone(data.origin)) //Check which zone the drag started in
+            {
+                case Zone.Pile:
+                    if (endZone == Zone.Hand1) //Player1 drags from the pile to his/her hand
+                    {
+                        GameDirector.director.CollectPile(Player.Player1); //Trigger input event
+                    }
+                    else if (endZone == Zone.Hand2) //Player2 drags from the pile to his/her hand
+                    {
+                        GameDirector.director.CollectPile(Player.Player2); //Trigger input event
+                    }
+                    break;
+                case Zone.Hand1:
+                    if (endZone == Zone.Pile) //Player1 drags from his/her hand to the pile
+                    {
+                        GameDirector.director.PlayCard(Player.Player1); //Trigger input event
+                    }
+                    break;
+                case Zone.Hand2:
+                    if (endZone == Zone.Pile)
+                    {
+                        GameDirector.director.PlayCard(Player.Player2); //Trigger input event
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     //UTILITY METHODS:
