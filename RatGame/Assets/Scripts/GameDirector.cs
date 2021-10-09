@@ -47,10 +47,6 @@ public class GameDirector : MonoBehaviour
     //Debug Controls:
     [Space()]
     public bool enableLogs;
-    public bool playCard1 = false;
-    public bool playCard2 = false;
-    public bool take1 = false;
-    public bool take2 = false;
 
     private void Awake()
     {
@@ -67,30 +63,6 @@ public class GameDirector : MonoBehaviour
 
         //Set up cards:
         GenerateHands();
-    }
-    private void Update()
-    {
-        //Debug Actions:
-        if (playCard1)
-        {
-            PlayCard(Player.Player1);
-            playCard1 = false;
-        }
-        if (playCard2)
-        {
-            PlayCard(Player.Player2);
-            playCard2 = false;
-        }
-        if (take1)
-        {
-            CollectPile(Player.Player1);
-            take1 = false;
-        }
-        if (take2)
-        {
-            CollectPile(Player.Player2);
-            take2 = false;
-        }
     }
 
     private void GenerateHands()

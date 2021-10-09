@@ -485,10 +485,6 @@ MonoBehaviour:
   turn: 0
   faceTriesLeft: 0
   enableLogs: 1
-  playCard1: 0
-  playCard2: 0
-  take1: 0
-  take2: 0
 --- !u!114 &954834137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -501,10 +497,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9611d5790cc97c4418b022fb1e4418e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugIndicatorPrefab: {fileID: 5726436742651224815, guid: 53c4a598a0f44d24a8609ac7dee15f2c, type: 3}
-  playLine: 0.2
-  collectLine: 0.4
-  touchOrigins: []
+  inputMode: 0
+  drawDebugLines: 0
+  playLine: 0.29
+  collectLine: 0.24
 --- !u!1 &962281251
 GameObject:
   m_ObjectHideFlags: 0

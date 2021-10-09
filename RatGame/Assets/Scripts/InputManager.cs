@@ -23,6 +23,7 @@ public class InputManager : MonoBehaviour
 
         //Meta:
         public bool markedForDisposal = false; //Set true once this object's associated touch has ended
+        public bool markedComplete = false;    //Set true once this touch creates an input event (does not destroy object but prevents it from triggering more events)
     }
 
     //Objects & Components:
@@ -39,6 +40,7 @@ public class InputManager : MonoBehaviour
     [Header("Settings (player):")]
     public InputMode inputMode; //Determines how inputs are registered during gameplay.  Swipe Mode: Cards are played when they cross a given threshold; Place Mode: Cards are played when the player lifts their finger
     [Header("Settings (editor):")]
+    public bool drawDebugLines;             //Switch for whether or not to display debug lines
     [Range(0, 1)] public float playLine;    //Position of line (as percentage of screen space from each player side) players must drag cards past (from hand) in order to play them (when in swipe mode)
     [Range(0, 1)] public float collectLine; //Position of line (as percentage of screen space from each player side) players must drag cards past (from pile) in order to collect the pile (when in swipe mode)
 
@@ -59,6 +61,15 @@ public class InputManager : MonoBehaviour
 
     private void Update()
     {
+        //Debug Stuff:
+        if (drawDebugLines)
+        {
+            Debug.DrawRay(ActualScreenToWorldPoint(new Vector3(0, GetPositionOfLine(playLine, Player.Player1))), Vector3.right * 6, Color.red);
+            Debug.DrawRay(ActualScreenToWorldPoint(new Vector3(0, GetPositionOfLine(playLine, Player.Player2))), Vector3.right * 6, Color.red);
+            Debug.DrawRay(ActualScreenToWorldPoint(new Vector3(0, GetPositionOfLine(collectLine, Player.Player1))), Vector3.right * 6, Color.yellow);
+            Debug.DrawRay(ActualScreenToWorldPoint(new Vector3(0, GetPositionOfLine(collectLine, Player.Player2))), Vector3.right * 6, Color.yellow);
+        }
+
         //Detect Input (parse touch arrays):
         touches = Input.touches; //Get most recent array of touches
         if (touches.Length > 0) //TOUCH INPUT:
@@ -117,18 +128,52 @@ public class InputManager : MonoBehaviour
     //INPUT EVENTS:
     private void TouchStarted(TouchData data)
     {
-        
+        //Process Input Event:
+
     }
     private void TouchMoved(TouchData data)
     {
-        if (inputMode == InputMode.Swipe)
+        //Process Input Event:
+        if (inputMode == InputMode.Swipe && //Only process inputs in this phase if swipes are enabled
+            !data.markedComplete)           //Only consider this input if it hasn't already been used for a swipe
         {
-            
+            switch (ReadPositionAsZone(data.origin)) //Check which zone the swipe started in
+            {
+                case Zone.Pile:
+                    if (data.position.y < GetPositionOfLine(collectLine, Player.Player1)) //Player1 swipes past his/her collect line
+                    {
+                        GameDirector.director.CollectPile(Player.Player1); //Trigger input event
+                        data.markedComplete = true; //Mark touch as inert now that it has triggered an event
+                    }
+                    else if (data.position.y > GetPositionOfLine(collectLine, Player.Player2)) //Player2 swipes past his/her collect line
+                    {
+                        GameDirector.director.CollectPile(Player.Player2); //Trigger input event
+                        data.markedComplete = true; //Mark touch as inert now that it has triggered an event
+                    }
+                    break;
+                case Zone.Hand1:
+                    if (data.position.y > GetPositionOfLine(playLine, Player.Player1)) //Player1 swipes past his/her play line
+                    {
+                        GameDirector.director.PlayCard(Player.Player1); //Trigger input event
+                        data.markedComplete = true; //Mark touch as inert now that it has triggered an event
+                    }
+                    break;
+                case Zone.Hand2:
+                    if (data.position.y < GetPositionOfLine(playLine, Player.Player2)) //Player2 swipes past his/her play line
+                    {
+                        GameDirector.director.PlayCard(Player.Player2); //Trigger input event
+                        data.markedComplete = true; //Mark touch as inert now that it has triggered an event
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
     }
     private void TouchEnded(TouchData data)
     {
-        
+        //Process Input Event:
+
     }
 
     //UTILITY METHODS:
