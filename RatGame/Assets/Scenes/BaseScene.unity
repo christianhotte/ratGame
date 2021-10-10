@@ -437,6 +437,7 @@ GameObject:
   - component: {fileID: 954834135}
   - component: {fileID: 954834136}
   - component: {fileID: 954834137}
+  - component: {fileID: 954834138}
   m_Layer: 0
   m_Name: GameDirector
   m_TagString: Untagged
@@ -496,6 +497,24 @@ MonoBehaviour:
   drawDebugLines: 0
   playLine: 0.29
   collectLine: 0.24
+--- !u!114 &954834138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 954834134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29d1fcd7d4eaaac4db0aafa9ef032f77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spriteSet: {fileID: 11400000, guid: d46a4d74017e0e04ea03145d9d5d25c2, type: 2}
+  cardPrefab: {fileID: 8185584652670022105, guid: 11eeb34c096f74c40ae83da75476b335, type: 3}
+  iconMaxSpread: {x: 0.55, y: 1.2}
+  generateDebugCard: 0
+  debugCardNumber: 1
+  debugCardSuit: 0
 --- !u!1 &962281251
 GameObject:
   m_ObjectHideFlags: 0

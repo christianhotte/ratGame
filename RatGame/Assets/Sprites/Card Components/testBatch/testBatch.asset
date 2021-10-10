@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c4293232ae4a534da64534d62adc096, type: 3}
+  m_Name: testBatch
+  m_EditorClassIdentifier: 
+  cardFront: {fileID: 21300000, guid: 8c87d55cd1de7aa46bbcc0928031da33, type: 3}
+  cardBack: {fileID: 21300000, guid: 8a48bc0473545d04a9ec5c911ee03f1c, type: 3}
+  suitIcons:
+  - {fileID: 56302936136264637, guid: 34f778105eb5cb14a84d452f7be1a427, type: 3}
+  - {fileID: -5541826874543358550, guid: 34f778105eb5cb14a84d452f7be1a427, type: 3}
+  - {fileID: 7194124025889606816, guid: 34f778105eb5cb14a84d452f7be1a427, type: 3}
+  - {fileID: 886596383453268093, guid: 34f778105eb5cb14a84d452f7be1a427, type: 3}
+  suitLabels:
+  - {fileID: -6520911695668869533, guid: 1a1be56ca6d477e4ca067ea9339cea94, type: 3}
+  - {fileID: -297230507238509696, guid: 1a1be56ca6d477e4ca067ea9339cea94, type: 3}
+  - {fileID: 7068798199903123776, guid: 1a1be56ca6d477e4ca067ea9339cea94, type: 3}
+  - {fileID: 4633464542142719383, guid: 1a1be56ca6d477e4ca067ea9339cea94, type: 3}
+  numeralLabels:
+  - {fileID: -7624710422138065836, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: -507810861356641249, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: 3752322438642911997, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: -2642039324197887850, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: -7905037156225986068, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: 8091627310083155998, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: -2006076757701400237, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: -3025974926118845495, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: 6539054716758359939, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: 6541960946465246203, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: 7098273232222910471, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: 36776228138123285, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  - {fileID: -4550225663138346475, guid: f07dd3c62c1ee1d44a35b22a17288b0d, type: 3}
+  jackIcons:
+  - {fileID: 5602988400166961143, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: 5602988400166961143, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: 2855505157886505823, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: 2855505157886505823, guid: a31908734425b3544920662755b84f09, type: 3}
+  queenIcons:
+  - {fileID: 1129202120176695110, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: 1129202120176695110, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: -4808395473370182821, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: -4808395473370182821, guid: a31908734425b3544920662755b84f09, type: 3}
+  kingIcons:
+  - {fileID: -7381037631546275760, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: -7381037631546275760, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: 2685703264138192804, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: 2685703264138192804, guid: a31908734425b3544920662755b84f09, type: 3}
+  aceIcons:
+  - {fileID: 3337063124926617966, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: -988199782739256386, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: 6601833333425889915, guid: a31908734425b3544920662755b84f09, type: 3}
+  - {fileID: 9147904630525718952, guid: a31908734425b3544920662755b84f09, type: 3}

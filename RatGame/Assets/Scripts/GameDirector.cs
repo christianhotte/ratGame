@@ -51,15 +51,8 @@ public class GameDirector : MonoBehaviour
     private void Awake()
     {
         //Initialize as sole director:
-        if (director == null)
-        {
-            //DontDestroyOnLoad(gameObject);
-            director = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (director == null) director = this;
+        else Destroy(this);
 
         //Set up cards:
         GenerateHands();

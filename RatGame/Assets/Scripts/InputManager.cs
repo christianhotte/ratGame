@@ -27,6 +27,7 @@ public class InputManager : MonoBehaviour
     }
 
     //Objects & Components:
+    public static InputManager inputManager;
         //NOTE: These objects determine the positions of the three major areas of play (don't move in hierarchy)
     private Transform pile;
     private Transform hand1;
@@ -50,6 +51,10 @@ public class InputManager : MonoBehaviour
 
     private void Awake()
     {
+        //Initialize as sole input manager:
+        if (inputManager == null) inputManager = this;
+        else Destroy(this);
+
         //Get positional components:
         pile = transform.GetChild(0);
         hand1 = transform.GetChild(1);
@@ -121,8 +126,6 @@ public class InputManager : MonoBehaviour
                 else i++; //Move on to next item if not marked for deletion
             }
         }
-
-
     }
 
     //INPUT EVENTS:
@@ -234,7 +237,6 @@ public class InputManager : MonoBehaviour
         worldPosition = Camera.main.ScreenToWorldPoint(worldPosition); //Then do the thing
         return worldPosition;
     }
-
     private TouchData GetTouchDataByID(int ID)
     {
         //Function: Returns item from touch data array with ID matching given number (or null if none exists)
