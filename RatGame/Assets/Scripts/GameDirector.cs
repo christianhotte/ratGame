@@ -19,12 +19,14 @@ public class GameDirector : MonoBehaviour
 
         //Meta Properties:
         public Player owner;
+        public Zone location;
         public bool isFaceCard;
         public bool isBurned;
     }
 
     //Objects & Components:
     public static GameDirector director;
+        //NOTE: For lists of cards, the card at index 0 is the one on top
     public List<Card> pile;
     public List<Card> hand1;
     public List<Card> hand2;
@@ -89,14 +91,19 @@ public class GameDirector : MonoBehaviour
             if (n < handicap)
             {
                 currentCard.owner = Player.Player1;
+                currentCard.location = Zone.Hand1;
                 hand1.Add(currentCard); //Determine hand size based on handicap setting, default is 26
             }
             else
             {
                 currentCard.owner = Player.Player2;
+                currentCard.location = Zone.Hand2;
                 hand2.Add(currentCard);
             }
         }
+
+        //Visualize Cards:
+        CardVisualizer.visualizer.GenerateHandAvatars();
     }
     private List<Card> ShuffleCards(List<Card> cards)
     {
@@ -149,8 +156,10 @@ public class GameDirector : MonoBehaviour
             playedCard.isBurned = true;
             pile.Add(playedCard); //Add card to bottom of pile
             if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
+            CheckForWin();
             return;
         }
+        playedCard.location = Zone.Pile; //Indicate that played card has been moved to the pile
 
         //Determine which player goes next:
         Player lastTurn = turn;
@@ -250,7 +259,9 @@ public class GameDirector : MonoBehaviour
                 hand2.RemoveAt(0);
             }
             burnedCard.isBurned = true;
+            burnedCard.location = Zone.Pile; //Indicate that burned card is now in the pile
             pile.Add(burnedCard); //Add burned card to bottom of pile
+            CheckForWin();
             if (enableLogs) Debug.Log(player + " burned " + burnedCard.number + " of " + burnedCard.suit + "s");
             return;
         }
@@ -267,6 +278,8 @@ public class GameDirector : MonoBehaviour
             Card collectedCard = pile[pile.Count - 1]; //Remove card from bottom of pile
             collectedCard.isBurned = false;
             collectedCard.owner = turn;
+            collectedCard.location = Zone.Hand1;                               //Assume card is now located in Player1's hand
+            if (player == Player.Player2) collectedCard.location = Zone.Hand2; //Correct location if card is going to Player2
             if (player == Player.Player1) hand1.Add(collectedCard); //Add card to bottom of player hand
             else hand2.Add(collectedCard);                          //Add card to bottom of player hand
             pile.Remove(collectedCard);
@@ -274,16 +287,25 @@ public class GameDirector : MonoBehaviour
         if (enableLogs) Debug.Log(player + " collected the pile");
 
         //Check for win condition:
+        CheckForWin();
+    }
+    private bool CheckForWin()
+    {
+        //Function: Determines whether or not a player has won
+
         if (hand1.Count == 0) //Player 1 is out of cards, Player 2 wins
         {
             gameOver = true;
             if (enableLogs) Debug.Log("Player2 won");
+            return true;
         }
         else if (hand2.Count == 0) //Player 2 is out of cards, Player 1 wins
         {
             gameOver = true;
             if (enableLogs) Debug.Log("Player1 won");
+            return true;
         }
+        return false; //Return false if neither player has the win condition
     }
     private void ToggleTurn()
     {

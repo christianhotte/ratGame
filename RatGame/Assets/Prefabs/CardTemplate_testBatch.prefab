@@ -92,7 +92,7 @@ GameObject:
   m_Component:
   - component: {fileID: 267240258153158280}
   m_Layer: 0
-  m_Name: CardTemplate
+  m_Name: CardTemplate_testBatch
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -379,7 +379,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &4985568419156899542
 Transform:
   m_ObjectHideFlags: 0
@@ -433,7 +433,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 609401447
   m_SortingLayer: 1
-  m_SortingOrder: 1
+  m_SortingOrder: 2
   m_Sprite: {fileID: 21300000, guid: 8a48bc0473545d04a9ec5c911ee03f1c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0

@@ -9,17 +9,17 @@ public class InputManager : MonoBehaviour
 
     //Classes, Enums & Structs:
     public enum InputMode {Swipe, Drop}
-    public enum Zone {Pile, Hand1, Hand2, None}
     [System.Serializable] public class TouchData
     {
         //Purpose: Object containing data relevant for a touch being actively tracked by the program
         //         This is used to create an organized layer of information separate from the touch list itself, in order to simplify the program and prevent errors
 
         //Data:
-        public Vector2 position; //The current point of contact for the touch
+        public Vector2 position; //The current point of contact for the touch (in screen pixel space)
         public Vector2 delta;    //How much this touch has moved since last update
         public Vector2 origin;   //The initial point of contact for the touch
         public int fingerID;     //The ID number linking this object to an existing touch
+        public Player player = Player.None; //The player who's finger this is (as assumed by the program)
 
         //Meta:
         public bool markedForDisposal = false; //Set true once this object's associated touch has ended
@@ -36,6 +36,10 @@ public class InputManager : MonoBehaviour
     private Collider2D pileZone;
     private Collider2D hand1Zone;
     private Collider2D hand2Zone;
+        //NOTE: Places are used to determine where cards and decks will be rendered
+    internal Transform pilePlace;
+    internal Transform hand1Place;
+    internal Transform hand2Place;
 
     //Settings:
     [Header("Settings (player):")]
@@ -62,6 +66,9 @@ public class InputManager : MonoBehaviour
         pileZone = pile.GetComponent<Collider2D>();
         hand1Zone = hand1.GetComponent<Collider2D>();
         hand2Zone = hand2.GetComponent<Collider2D>();
+        pilePlace = pile.GetChild(0);
+        hand1Place = hand1.GetChild(0);
+        hand2Place = hand2.GetChild(0);
     }
 
     private void Update()
@@ -88,6 +95,8 @@ public class InputManager : MonoBehaviour
                     touchData.position = touch.position;
                     touchData.origin = touch.position;
                     touchData.fingerID = touch.fingerId;
+                    if (ReadPositionAsZone(touchData.position) == Zone.Hand1) touchData.player = Player.Player1;
+                    else if (ReadPositionAsZone(touchData.position) == Zone.Hand2) touchData.player = Player.Player2;
                     touchDataList.Add(touchData); //Add new data to list
                     TouchStarted(touchData); //Indicate to program that this touch has begun
                 }
@@ -131,7 +140,13 @@ public class InputManager : MonoBehaviour
     //INPUT EVENTS:
     private void TouchStarted(TouchData data)
     {
-        
+        //Process Card Visualization:
+        if (ReadPositionAsZone(data.position) == Zone.Hand1 ||
+            ReadPositionAsZone(data.position) == Zone.Hand2)
+        {
+            //NOTE: The "held" status of a card is purely visual, and is/should be overridden by GameDirector-driven mechanics
+            CardVisualizer.visualizer.HoldCard(data); //Indicate that a card has been picked up (but not played)
+        }
     }
     private void TouchMoved(TouchData data)
     {
@@ -157,6 +172,7 @@ public class InputManager : MonoBehaviour
                     if (data.position.y > GetPositionOfLine(playLine, Player.Player1)) //Player1 swipes past his/her play line
                     {
                         GameDirector.director.PlayCard(Player.Player1); //Trigger input event
+                        CardVisualizer.visualizer.ReleaseCard(Player.Player1, Zone.Pile); //Trigger visual event
                         data.markedComplete = true; //Mark touch as inert now that it has triggered an event
                     }
                     break;
@@ -164,6 +180,7 @@ public class InputManager : MonoBehaviour
                     if (data.position.y < GetPositionOfLine(playLine, Player.Player2)) //Player2 swipes past his/her play line
                     {
                         GameDirector.director.PlayCard(Player.Player2); //Trigger input event
+                        CardVisualizer.visualizer.ReleaseCard(Player.Player2, Zone.Pile); //Trigger visual event
                         data.markedComplete = true; //Mark touch as inert now that it has triggered an event
                     }
                     break;
@@ -175,9 +192,9 @@ public class InputManager : MonoBehaviour
     private void TouchEnded(TouchData data)
     {
         //Process Input Event:
+        Zone endZone = ReadPositionAsZone(data.position);
         if (inputMode == InputMode.Drop) //Only process inputs in this phase if drag&drop is enabled
         {
-            Zone endZone = ReadPositionAsZone(data.position);
             switch (ReadPositionAsZone(data.origin)) //Check which zone the drag started in
             {
                 case Zone.Pile:
@@ -197,7 +214,7 @@ public class InputManager : MonoBehaviour
                     }
                     break;
                 case Zone.Hand2:
-                    if (endZone == Zone.Pile)
+                    if (endZone == Zone.Pile) //Player2 drags from his/her hand to the pile
                     {
                         GameDirector.director.PlayCard(Player.Player2); //Trigger input event
                     }
@@ -206,6 +223,8 @@ public class InputManager : MonoBehaviour
                     break;
             }
         }
+        //Process Visual Event:
+        CardVisualizer.visualizer.ReleaseCard(data.player, endZone); //Trigger visual event
     }
 
     //UTILITY METHODS:
@@ -219,6 +238,23 @@ public class InputManager : MonoBehaviour
         else if (hand2Zone.bounds.Contains(realPosition)) return Zone.Hand2;
         else return Zone.None;
     }
+    public Vector2 GetPositionFromZone(Zone zone)
+    {
+        //Function: Returns position of "place" transform for given zone
+
+        switch (zone)
+        {
+            case Zone.Pile:
+                return pilePlace.position;
+            case Zone.Hand1:
+                return hand1Place.position;
+            case Zone.Hand2:
+                return hand2Place.position;
+            default:
+                Debug.LogError("Tried to get position of null zone");
+                return Vector2.zero;
+        }
+    }
     private float GetPositionOfLine(float lineSetting, Player player)
     {
         //Function: Determines where in screen space the given boundary line (playLine or collectLine) is
@@ -228,7 +264,7 @@ public class InputManager : MonoBehaviour
         if (player == Player.Player2) linePos = Camera.main.scaledPixelHeight - linePos; //Flip position (along center of screen) for player 2
         return linePos;
     }
-    private Vector3 ActualScreenToWorldPoint(Vector2 screenPosition)
+    public Vector3 ActualScreenToWorldPoint(Vector2 screenPosition)
     {
         //Function: Does what ScreenToWorldPoint should do ):
 
