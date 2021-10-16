@@ -20,6 +20,7 @@ public class InputManager : MonoBehaviour
         public Vector2 origin;   //The initial point of contact for the touch
         public int fingerID;     //The ID number linking this object to an existing touch
         public Player player = Player.None; //The player who's finger this is (as assumed by the program)
+        public float touchTime = 0; //The amount of time this touch has been active for
 
         //Meta:
         public bool markedForDisposal = false; //Set true once this object's associated touch has ended
@@ -127,6 +128,10 @@ public class InputManager : MonoBehaviour
                     TouchEnded(data); //Indicate to program that this touch has ended
                     data.markedForDisposal = true;
                 }
+                else //Touch has continued to this frame
+                {
+                    data.touchTime += Time.deltaTime;
+                }
             }
             for (int i = 0; i < touchDataList.Count;) //Very smart cool nifty totally efficient way to clean up list without throwing indexoutofrange errors
             {
@@ -144,7 +149,6 @@ public class InputManager : MonoBehaviour
         if (ReadPositionAsZone(data.position) == Zone.Hand1 ||
             ReadPositionAsZone(data.position) == Zone.Hand2)
         {
-            //NOTE: The "held" status of a card is purely visual, and is/should be overridden by GameDirector-driven mechanics
             CardVisualizer.visualizer.HoldCard(data); //Indicate that a card has been picked up (but not played)
         }
     }
@@ -278,5 +282,16 @@ public class InputManager : MonoBehaviour
         if (touchDataList.Count == 0) return null; //Return null if there are no items to return
         foreach (TouchData item in touchDataList) if (item.fingerID == ID) return item; //Parse through list and return matching item if found
         return null; //If matching item is never found, return null
+    }
+    public TouchData[] GetTouchesInZone(Zone zone)
+    {
+        //Function: Returns an array of all touches currently in given zone
+
+        List<TouchData> touchesInZone = new List<TouchData>(); //Initialize list
+        foreach (TouchData touch in touchDataList) //Parse through list of current touches
+        {
+            if (ReadPositionAsZone(touch.position) == zone) touchesInZone.Add(touch); //Add touches in desired zone
+        }
+        return touchesInZone.ToArray(); //Return result as array
     }
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using HotteStuff;
 
 public class CardVisualizer : MonoBehaviour
 {
@@ -25,6 +26,7 @@ public class CardVisualizer : MonoBehaviour
         public bool held = false;            //True if card is currently being held
         public bool faceUp = false;          //True if this card is currently face-up (cards always generate face-down)
         public bool floating = false;        //Whether or not this card is lerping toward a designated location
+        public bool movedOnPile = false;     //Whether or not this card is on the pile and is out of position
     }
 
     //Objects & Components:
@@ -38,16 +40,19 @@ public class CardVisualizer : MonoBehaviour
     public float snapToZoneSpeed;  //How fast a floating card will move to designated zone when released (with deltaTime applied)
     public float snapToZoneRadius; //How close to a zone a card must get before it snaps into the zone and stops being rendered
     public float cardHoldYOffset;  //Allows the point where cards are held to be adjusted along the Y axis (for visibility)
+    [Space()]
+    public Vector2 pileDragMinRange;
+    public Vector2 pileDragMaxRange;
 
     //Conditions & Memory Vars:
-    public List<CardAvatarData> activeCards = new List<CardAvatarData>(); //List of all currently-generated cards
-    public List<CardAvatarData> pileCards = new List<CardAvatarData>();   //Cards in pile
-    public List<CardAvatarData> hand1Cards = new List<CardAvatarData>();  //Cards in Player1 hand
-    public List<CardAvatarData> hand2Cards = new List<CardAvatarData>();  //Cards in Player2 hand
+    private List<CardAvatarData> activeCards = new List<CardAvatarData>(); //List of all currently-generated cards
+    private List<CardAvatarData> pileCards = new List<CardAvatarData>();   //Cards in pile
+    private List<CardAvatarData> hand1Cards = new List<CardAvatarData>();  //Cards in Player1 hand
+    private List<CardAvatarData> hand2Cards = new List<CardAvatarData>();  //Cards in Player2 hand
     internal CardAvatarData heldCard1 = null; //Card LAST held by Player1
     internal CardAvatarData heldCard2 = null; //Card LAST held by Player2
-    public bool holdingCard1 = false; //Whether or not Player1 is holding a card (I think this is redundant but I was having problems)
-    public bool holdingCard2 = false; //Whether or not Player2 is holding a card
+    private bool holdingCard1 = false; //Whether or not Player1 is holding a card (I think this is redundant but I was having problems)
+    private bool holdingCard2 = false; //Whether or not Player2 is holding a card
 
     private void Awake()
     {
@@ -58,6 +63,15 @@ public class CardVisualizer : MonoBehaviour
 
     private void Update()
     {
+        MoveFloatingCards();
+        MovePileCards();
+    }
+
+    //CARD MANIPULATION/MOVEMENT:
+    private void MoveFloatingCards()
+    {
+        //Function: Runs through all active cards and lerps floating cards toward where they need to go
+
         if (activeCards.Count > 0)
         {
             //Update Card Visuals:
@@ -95,7 +109,64 @@ public class CardVisualizer : MonoBehaviour
                 }
             }
         }
-     
+    }
+    private void MovePileCards()
+    {
+        //Function: Allows players to pull pile aside to see top three cards (by moving cards depending on player input)
+
+        //Safety/redundancy check:
+        if (pileCards.Count < 2) return; //Don't bother if there are fewer than 2 cards (all cards are visible or there are no cards)
+        if (pileCards[0].floating) return; //Don't try and mess with floating cards
+
+        //Decide target location for top card of pile:
+        InputManager.TouchData[] pileTouches = InputManager.inputManager.GetTouchesInZone(Zone.Pile); //Get touches on pile
+        Vector2 pilePosition = InputManager.inputManager.pilePlace.position; //Get position of pile in scene
+        Vector2 avgTouchPos = pilePosition; //Initialize touch position variable at location of pile (so that touches offset it)
+        foreach (InputManager.TouchData touch in pileTouches) //Parse through array of current touches
+        {
+            avgTouchPos += (Vector2)InputManager.inputManager.ActualScreenToWorldPoint(touch.position); //Add position to targetXPosition
+        }
+        if (pileTouches.Length != 0) avgTouchPos /= pileTouches.Length; //Get average of touch position targets (also avoid dividing by zero)
+        if (Mathf.Abs(avgTouchPos.x) < pileDragMinRange.x) avgTouchPos.x = pilePosition.x; //Negate value if too low
+        else avgTouchPos.x = Mathf.Sign(avgTouchPos.x) * HotteMath.Map(Mathf.Abs(avgTouchPos.x), pileDragMinRange.x, pileDragMaxRange.x, 0, pileDragMaxRange.x);
+        if (Mathf.Abs(avgTouchPos.y) < pileDragMinRange.y) avgTouchPos.y = pilePosition.y; //Negate value if too low
+        else avgTouchPos.y = Mathf.Sign(avgTouchPos.y) * HotteMath.Map(Mathf.Abs(avgTouchPos.y), pileDragMinRange.y, pileDragMaxRange.y, 0, pileDragMaxRange.y);
+        Vector2 targetPosition = avgTouchPos; //Default target position to location of pile
+
+        //Move top card toward target:
+        CardAvatarData topCard = pileCards[0]; //Get top card on pile
+        Vector2 currentPosition = topCard.transform.position;
+        //Vector2 targetPosition = new Vector2(targetXPos, InputManager.inputManager.pilePlace.position.y); //Set top card target position
+        Vector2 newPosition = Vector2.Lerp(currentPosition, targetPosition, snapToTouchSpeed * Time.deltaTime); //Move toward target position
+        topCard.transform.position = newPosition; //Set new card position
+        topCard.movedOnPile = true; //Indicate that this card is on pile but is out of position
+
+        //Move card directly under top halfway toward target (if applicable):
+        if (pileCards.Count < 3) return; //Don't bother if there are only two cards in pile
+        CardAvatarData secondCard = pileCards[1]; //Get second card to top on pile
+        currentPosition = secondCard.transform.position;
+        targetPosition = Vector2.Lerp(InputManager.inputManager.pilePlace.position, targetPosition, 0.5f); //Get position halfway between topCard target and pile
+        newPosition = Vector2.Lerp(currentPosition, targetPosition, snapToTouchSpeed * Time.deltaTime); //Move toward target position
+        secondCard.transform.position = newPosition; //Set new card position
+        secondCard.movedOnPile = true; //Indicate that this card is on pile but is out of position
+        
+        //Make sure all other cards in pile are in their normal position:
+        for (int i = 2; i < pileCards.Count; i++) //Iterate through cards in pile
+        {
+            CardAvatarData avatar = pileCards[i]; //Get card
+            if (avatar.movedOnPile) //If avatar is more than 2 cards deep in pile but is still out of position
+            {
+                currentPosition = avatar.transform.position; //Get position of card
+                targetPosition = InputManager.inputManager.pilePlace.position; //Get position of pile
+                newPosition = Vector2.Lerp(currentPosition, targetPosition, snapToZoneSpeed * Time.deltaTime); //Move card back toward pile
+                if (Vector2.Distance(newPosition, targetPosition) < snapToZoneRadius) //Card is now fully on pile
+                {
+                    avatar.movedOnPile = false; //Indicate that card is now static on pile again
+                    newPosition = targetPosition; //Ensure card is placed exactly on pile
+                }
+                avatar.transform.position = newPosition; //Set new card position
+            }
+        }
     }
 
     //CARD PLACEMENT:
@@ -164,6 +235,17 @@ public class CardVisualizer : MonoBehaviour
         MoveCardToZone(avatar.originZone, Zone.Pile, true, true); //Add card to pile
         FlipCard(avatar, true); //Flip card face up
     }
+    public void BurnCard(Player player)
+    {
+        //Function: Visualizes a card being burnt
+
+        //Get origin zone from player:
+        Zone originZone = Zone.Hand1;
+        if (player == Player.Player2) originZone = Zone.Hand2;
+
+        MoveCardToZone(originZone, Zone.Pile, true, false); //Move card to bottom of pile
+        FlipCard(pileCards[pileCards.Count - 1], true);
+    }
     public void CollectPile(Player player)
     {
         //Function: Visualizes pile collection for given player
@@ -178,18 +260,8 @@ public class CardVisualizer : MonoBehaviour
             CardAvatarData avatar = pileCards[pileCards.Count - 1];
             MoveCardToZone(Zone.Pile, targetZone, false, false); //Take cards from bottom of pile and add to bottom of hand
             FlipCard(avatar, false); //Flip cards face-down
+            avatar.movedOnPile = false; //Just making sure
         }
-    }
-    public void BurnCard(Player player)
-    {
-        //Function: Visualizes a card being burnt
-
-        //Get origin zone from player:
-        Zone originZone = Zone.Hand1;
-        if (player == Player.Player2) originZone = Zone.Hand2;
-
-        MoveCardToZone(originZone, Zone.Pile, true, false); //Move card to bottom of pile
-        FlipCard(pileCards[pileCards.Count - 1], true);
     }
     public CardAvatarData ReleaseCard(Player player)
     {
