@@ -479,6 +479,7 @@ MonoBehaviour:
   hand2: []
   singlePlayer: 0
   redTens: 0
+  burnMode: 1
   handicap: 26
   enableLogs: 1
 --- !u!114 &954834137
@@ -516,6 +517,12 @@ MonoBehaviour:
   snapToZoneSpeed: 20
   snapToZoneRadius: 0.01
   cardHoldYOffset: 0.8
+  activeCards: []
+  pileCards: []
+  hand1Cards: []
+  hand2Cards: []
+  holdingCard1: 0
+  holdingCard2: 0
 --- !u!1 &962281251
 GameObject:
   m_ObjectHideFlags: 0

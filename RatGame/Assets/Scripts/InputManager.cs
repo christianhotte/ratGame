@@ -172,7 +172,6 @@ public class InputManager : MonoBehaviour
                     if (data.position.y > GetPositionOfLine(playLine, Player.Player1)) //Player1 swipes past his/her play line
                     {
                         GameDirector.director.PlayCard(Player.Player1); //Trigger input event
-                        CardVisualizer.visualizer.ReleaseCard(Player.Player1, Zone.Pile); //Trigger visual event
                         data.markedComplete = true; //Mark touch as inert now that it has triggered an event
                     }
                     break;
@@ -180,7 +179,6 @@ public class InputManager : MonoBehaviour
                     if (data.position.y < GetPositionOfLine(playLine, Player.Player2)) //Player2 swipes past his/her play line
                     {
                         GameDirector.director.PlayCard(Player.Player2); //Trigger input event
-                        CardVisualizer.visualizer.ReleaseCard(Player.Player2, Zone.Pile); //Trigger visual event
                         data.markedComplete = true; //Mark touch as inert now that it has triggered an event
                     }
                     break;
@@ -224,7 +222,7 @@ public class InputManager : MonoBehaviour
             }
         }
         //Process Visual Event:
-        CardVisualizer.visualizer.ReleaseCard(data.player, endZone); //Trigger visual event
+        CardVisualizer.visualizer.ReleaseCard(data.player);
     }
 
     //UTILITY METHODS:

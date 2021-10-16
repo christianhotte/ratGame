@@ -150,62 +150,70 @@ public class CardVisualizer : MonoBehaviour
         cardAvatar.held = true;
         RenderCardOnTopOfAll(cardAvatar); //Ensure card is rendered above the rest of the cards in the scene
     }
-    public void ReleaseCard(Player player, Zone endZone)
+    public void PlayCard(Player player)
     {
-        //Function: Called whenever player lifts a finger (presumably while holding a card), or when a card is "played" by a swipe
+        //Function: Called by GameDirector to play given player's held card to the pile
 
-        //Check for card:
+        //Safety check:
+        if (player == Player.None) return;
         if (player == Player.Player1 && !holdingCard1) return;
-        else if (player == Player.Player2 && !holdingCard2) return;
+        if (player == Player.Player2 && !holdingCard2) return;
 
-        //Check for other fingers card could be sent to:
-        /*foreach (InputManager.TouchData touch in InputManager.inputManager.touchDataList)
+        //Release card to pile:
+        CardAvatarData avatar = ReleaseCard(player); //Release player's held card
+        MoveCardToZone(avatar.originZone, Zone.Pile, true, true); //Add card to pile
+        FlipCard(avatar, true); //Flip card face up
+    }
+    public void CollectPile(Player player)
+    {
+        //Function: Visualizes pile collection for given player
+
+        //Get target zone from player:
+        Zone targetZone = Zone.Hand1;
+        if (player == Player.Player2) targetZone = Zone.Hand2;
+
+        //Move cards:
+        while (pileCards.Count > 0) //Go through all cards in pile
         {
-            if (touch.player == player) //Same player has other current touches card could go to
-            {
-                if (player == Player.Player1) heldCard1.touchData = touch;
-                else heldCard2.touchData = touch;
-                return;
-            }
-        }*/
+            CardAvatarData avatar = pileCards[pileCards.Count - 1];
+            MoveCardToZone(Zone.Pile, targetZone, false, false); //Take cards from bottom of pile and add to bottom of hand
+            FlipCard(avatar, false); //Flip cards face-down
+        }
+    }
+    public void BurnCard(Player player)
+    {
+        //Function: Visualizes a card being burnt
 
-        //Un-hold card:
-        CardAvatarData cardAvatar; //Initialize container to get correct card
+        //Get origin zone from player:
+        Zone originZone = Zone.Hand1;
+        if (player == Player.Player2) originZone = Zone.Hand2;
+
+        MoveCardToZone(originZone, Zone.Pile, true, false); //Move card to bottom of pile
+        FlipCard(pileCards[pileCards.Count - 1], true);
+    }
+    public CardAvatarData ReleaseCard(Player player)
+    {
+        //Function: Un-holds given card and allows it to snap to target zone
+
+        CardAvatarData avatar;
         if (player == Player.Player1) //Player1's held card
         {
-            cardAvatar = heldCard1;
+            if (heldCard1 == null) return null; //Safety check
+            avatar = heldCard1;
+            heldCard1 = null;
             holdingCard1 = false;
         }
         else //Player2's held card
         {
-            cardAvatar = heldCard2;
+            if (heldCard2 == null) return null; //Safety check
+            avatar = heldCard2;
+            heldCard2 = null;
             holdingCard2 = false;
         }
-        cardAvatar.held = false;
-        cardAvatar.touchData = null;
-        cardAvatar.floating = true;
-
-        //Set new target zone:
-        if (endZone == Zone.None) //Null zone contingency
-        {
-            if (player == Player.Player1) endZone = heldCard1.originZone; //Send card back to origin zone
-            else endZone = heldCard2.originZone; //Send card back to origin zone
-        }
-        cardAvatar.targetZone = endZone; //Send card to new target zone
-        
-        //Check for zone change:
-        if (cardAvatar.targetZone == Zone.Pile && cardAvatar.originZone != Zone.Pile) //Card is moving to the pile
-        {
-            if (!cardAvatar.cardData.isBurned) //Card is being played to pile
-            {
-                MoveCardToZone(cardAvatar.originZone, Zone.Pile, true, true);
-                FlipCard(cardAvatar, true); //Flip card to be face-up
-            }
-            else //Card is being burned to pile
-            {
-                MoveCardToZone(cardAvatar.originZone, Zone.Pile, true, false);
-            }
-        }
+        avatar.held = false;
+        avatar.touchData = null;
+        avatar.floating = true;
+        return avatar;
     }
     private void MoveCardToZone(Zone originZone, Zone targetZone, bool takeFromTop, bool addToTop)
     {
@@ -270,6 +278,7 @@ public class CardVisualizer : MonoBehaviour
         originList.Remove(avatar); //Remove card from origin list
         avatar.originZone = targetZone; //Establish new card position
         avatar.targetZone = targetZone; //Just making sure
+        avatar.floating = true; //Make sure card can move physically
     }
 
     //CARD RENDERING:
@@ -624,5 +633,31 @@ public class CardVisualizer : MonoBehaviour
             CardAvatarData avatar = cardList[i]; //Get card from list
             int minLayer = avatar.transform.Find("Front").GetComponent<SpriteRenderer>().sortingOrder; //Get lowest layer of given card
             SetCardRenderLayer(avatar, minLayer + 3); //Increment all sprite layers in card by 3
+        }
+    }*/
+/*public void ReleaseCard(Player player, Zone endZone)
+    {
+        //Function: Called whenever player lifts a finger (presumably while holding a card), or when a card is "played" by a swipe
+
+        //Set new target zone:
+        if (endZone == Zone.None) //Null zone contingency
+        {
+            if (player == Player.Player1) endZone = heldCard1.originZone; //Send card back to origin zone
+            else endZone = heldCard2.originZone; //Send card back to origin zone
+        }
+        cardAvatar.targetZone = endZone; //Send card to new target zone
+        
+        //Check for zone change:
+        if (cardAvatar.targetZone == Zone.Pile && cardAvatar.originZone != Zone.Pile) //Card is moving to the pile
+        {
+            FlipCard(cardAvatar, true); //Make sure card is face-up
+            if (!cardAvatar.cardData.isBurned) //Card is being played to pile
+            {
+                MoveCardToZone(cardAvatar.originZone, Zone.Pile, true, true);
+            }
+            else //Card is being burned to pile
+            {
+                MoveCardToZone(cardAvatar.originZone, Zone.Pile, true, false);
+            }
         }
     }*/

@@ -8,6 +8,7 @@ public class GameDirector : MonoBehaviour
     //Purpose: Governing core (mechanical) gameplay functions in Play scene
 
     //Classes, Enums & Structs:
+    public enum BurnType { autoBurn, manualBurn, noBurn }
     [System.Serializable] public class Card
     {
         //Created: 10-2-21
@@ -34,8 +35,9 @@ public class GameDirector : MonoBehaviour
 
     //Settings:
     [Header("Game Settings:")]
-    public bool singlePlayer;                //Whether or not the game is in singleplayer mode
-    public bool redTens;                     //Whether or not the optional rule of red 10s always being slappable is activated
+    public bool singlePlayer; //Whether or not the game is in singleplayer mode
+    public bool redTens;      //Whether or not the optional rule of red 10s always being slappable is activated
+    public BurnType burnMode; //Determines behavior for when a player burns a card
     [Range(1, 51)] public int handicap = 26; //The number of cards that will be dealt to P1 next time hands are generated
 
     //Conditions & Memory Vars:
@@ -45,6 +47,8 @@ public class GameDirector : MonoBehaviour
     internal bool gameOver = false;    //Whether or not the game/round has ended
     internal Player turn;              //The player who's turn it is to play a card
     internal int faceTriesLeft = 0;    //How many tries the current player has left to beat the current Face Card Contest (0 if NA)
+    internal int cardsToBurn1;         //How many cards Player1 has to burn before the game can progress
+    internal int cardsToBurn2;         //How many cards Player2 has to burn before the game can progress
 
     //Debug Controls:
     [Space()]
@@ -58,6 +62,11 @@ public class GameDirector : MonoBehaviour
 
         //Set up cards:
         GenerateHands();
+    }
+    private void Start()
+    {
+        //Visualize Cards:
+        CardVisualizer.visualizer.GenerateHandAvatars();
     }
 
     private void GenerateHands()
@@ -101,9 +110,6 @@ public class GameDirector : MonoBehaviour
                 hand2.Add(currentCard);
             }
         }
-
-        //Visualize Cards:
-        CardVisualizer.visualizer.GenerateHandAvatars();
     }
     private List<Card> ShuffleCards(List<Card> cards)
     {
@@ -130,36 +136,87 @@ public class GameDirector : MonoBehaviour
     {
         //Function: Plays the top card from the given player's hand to the pile, then processes the results and sets game behavior based on certain conditions
 
-        //Get card and move it from player hand:
+        //Get card from player hand:
         Card playedCard;
         if (player == Player.Player1) //Remove card from top of hand
         {
             if (hand1.Count == 0) return; //Exit if Player1 has no cards to play
             playedCard = hand1[0];
-            hand1.RemoveAt(0);
         }
         else //Remove card from top of hand
         {
             if (hand2.Count == 0) return; //Exit if Player2 has no cards to play
             playedCard = hand2[0];
-            hand2.RemoveAt(0);
         }
 
-        //Check where to place card in pile (in case it has been placed out of turn):
-        if (player == turn && !collectible) //Card is played by correct player
-        {
-            pile.Insert(0, playedCard); //Add card to top of pile
-            if (enableLogs) Debug.Log(player + " played " + playedCard.number + " of " + playedCard.suit + "s");
-        }
-        else //Card is played by wrong player (or while pile is collectible)
+        //Special rules for manual card burning:
+        if (cardsToBurn1 > 0 && player == Player.Player1) //Player1 can burn a card
         {
             playedCard.isBurned = true;
             pile.Add(playedCard); //Add card to bottom of pile
-            if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
+            playedCard.location = Zone.Pile; //Indicate that played card has been moved to the pile
+            if (player == Player.Player1) hand1.RemoveAt(0);
+            else hand2.RemoveAt(0);
+            CardVisualizer.visualizer.BurnCard(player);
             CheckForWin();
+            cardsToBurn1--;
+            if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
             return;
         }
+        else if (cardsToBurn2 > 0 && player == Player.Player2) //Player2 can burn a card
+        {
+            playedCard.isBurned = true;
+            pile.Add(playedCard); //Add card to bottom of pile
+            playedCard.location = Zone.Pile; //Indicate that played card has been moved to the pile
+            if (player == Player.Player1) hand1.RemoveAt(0);
+            else hand2.RemoveAt(0);
+            CardVisualizer.visualizer.BurnCard(player);
+            CheckForWin();
+            cardsToBurn2--;
+            if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
+            return;
+        }
+        else if (cardsToBurn1 > 0 || cardsToBurn2 > 0)
+        {
+            CardVisualizer.visualizer.ReleaseCard(player);
+            if (enableLogs) Debug.Log("Someone's gotta burn a card(s)");
+            return;
+        }
+
+        //Check for burn:
+        if (player != turn || collectible) //Player tries to play out of turn or plays while pile is collectible
+        {
+            switch (burnMode) //Burn behavior based on mode
+            {
+                case BurnType.autoBurn: //Player automatically burns a card
+                    playedCard.isBurned = true;
+                    pile.Add(playedCard); //Add card to bottom of pile
+                    playedCard.location = Zone.Pile; //Indicate that played card has been moved to the pile
+                    if (player == Player.Player1) hand1.RemoveAt(0);
+                    else hand2.RemoveAt(0);
+                    CardVisualizer.visualizer.BurnCard(player);
+                    if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
+                    CheckForWin();
+                    break;
+                case BurnType.manualBurn: //Player must burn a card as their next action
+                    if (player == Player.Player1) cardsToBurn1++;
+                    else cardsToBurn2++;
+                    if (enableLogs) Debug.Log(player + " must burn a card");
+                    break;
+                case BurnType.noBurn: //Player cannot play card, but nothing is burned
+                    CardVisualizer.visualizer.ReleaseCard(player);
+                    if (enableLogs) Debug.Log(player + " tried to play a card out of turn");
+                    break;
+            }
+            return;
+        }
+
+        //Programmatically move card:
+        pile.Insert(0, playedCard); //Add card to top of pile
         playedCard.location = Zone.Pile; //Indicate that played card has been moved to the pile
+        if (player == Player.Player1) hand1.RemoveAt(0);
+        else hand2.RemoveAt(0);
+        if (enableLogs) Debug.Log(player + " played " + playedCard.number + " of " + playedCard.suit + "s");
 
         //Determine which player goes next:
         Player lastTurn = turn;
@@ -236,33 +293,52 @@ public class GameDirector : MonoBehaviour
                 }
             }
         }
+
+        //Visualize cards:
+        CardVisualizer.visualizer.PlayCard(player);
     }
     public void CollectPile(Player player)
     {
         //Function: Attempts to claim the pile for the given player, combining the pile with their deck if successful and checking for a win condition
 
-        //Check if collection is invalid:
+        //Check if collection is valid:
         if (!slappable && !collectible || !slappable && player != turn) //Pile is not slappable or collectible by this player
         {
             //Burn a card:
-            Card burnedCard;
-            if (player == Player.Player1) //Remove card from top of hand
+            if (pile.Count == 0) return; //Prevent losing player in a slap contest from accidentally burning a card
+            switch (burnMode)
             {
-                if (hand1.Count == 0) return; //Exit if Player1 has no cards to burn
-                burnedCard = hand1[0];
-                hand1.RemoveAt(0);
+                case BurnType.autoBurn: //Player immediately burns a card
+                    Card burnedCard;
+                    if (player == Player.Player1) //Remove card from top of hand
+                    {
+                        if (hand1.Count == 0) return; //Exit if Player1 has no cards to burn
+                        burnedCard = hand1[0];
+                        hand1.RemoveAt(0);
+                    }
+                    else //Remove card from top of hand
+                    {
+                        if (hand2.Count == 0) return; //Exit if Player2 has no cards to burn
+                        burnedCard = hand2[0];
+                        hand2.RemoveAt(0);
+                    }
+                    burnedCard.isBurned = true;
+                    burnedCard.location = Zone.Pile; //Indicate that burned card is now in the pile
+                    pile.Add(burnedCard); //Add burned card to bottom of pile
+                    CardVisualizer.visualizer.BurnCard(player);
+                    CheckForWin();
+                    if (enableLogs) Debug.Log(player + " burned " + burnedCard.number + " of " + burnedCard.suit + "s");
+                    break;
+                case BurnType.manualBurn: //Player must burn a card
+                    if (player == Player.Player1) cardsToBurn1++;
+                    else cardsToBurn2++;
+                    if (enableLogs) Debug.Log(player + " must burn a card");
+                    break;
+                case BurnType.noBurn: //Player cannot collect the pile, but does not have to burn a card
+                    CardVisualizer.visualizer.ReleaseCard(player);
+                    if (enableLogs) Debug.Log(player + " tried to play a card out of turn");
+                    break;
             }
-            else //Remove card from top of hand
-            {
-                if (hand2.Count == 0) return; //Exit if Player2 has no cards to burn
-                burnedCard = hand2[0];
-                hand2.RemoveAt(0);
-            }
-            burnedCard.isBurned = true;
-            burnedCard.location = Zone.Pile; //Indicate that burned card is now in the pile
-            pile.Add(burnedCard); //Add burned card to bottom of pile
-            CheckForWin();
-            if (enableLogs) Debug.Log(player + " burned " + burnedCard.number + " of " + burnedCard.suit + "s");
             return;
         }
 
@@ -285,6 +361,9 @@ public class GameDirector : MonoBehaviour
             pile.Remove(collectedCard);
         }
         if (enableLogs) Debug.Log(player + " collected the pile");
+
+        //Visualize Collection:
+        CardVisualizer.visualizer.CollectPile(player);
 
         //Check for win condition:
         CheckForWin();
