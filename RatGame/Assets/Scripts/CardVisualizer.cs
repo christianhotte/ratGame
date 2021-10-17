@@ -51,8 +51,8 @@ public class CardVisualizer : MonoBehaviour
     private List<CardAvatarData> hand2Cards = new List<CardAvatarData>();  //Cards in Player2 hand
     internal CardAvatarData heldCard1 = null; //Card LAST held by Player1
     internal CardAvatarData heldCard2 = null; //Card LAST held by Player2
-    private bool holdingCard1 = false; //Whether or not Player1 is holding a card (I think this is redundant but I was having problems)
-    private bool holdingCard2 = false; //Whether or not Player2 is holding a card
+    internal bool holdingCard1 = false; //Whether or not Player1 is holding a card (I think this is redundant but I was having problems)
+    internal bool holdingCard2 = false; //Whether or not Player2 is holding a card
 
     private void Awake()
     {

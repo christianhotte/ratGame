@@ -28,9 +28,9 @@ public class GameDirector : MonoBehaviour
     //Objects & Components:
     public static GameDirector director;
         //NOTE: For lists of cards, the card at index 0 is the one on top
-    public List<Card> pile;
-    public List<Card> hand1;
-    public List<Card> hand2;
+    internal List<Card> pile;
+    internal List<Card> hand1;
+    internal List<Card> hand2;
     private readonly System.Random rnd = new System.Random();
 
     //Settings:
@@ -158,7 +158,7 @@ public class GameDirector : MonoBehaviour
             if (player == Player.Player1) hand1.RemoveAt(0);
             else hand2.RemoveAt(0);
             CardVisualizer.visualizer.BurnCard(player);
-            CheckForWin();
+            //CheckForWin();
             cardsToBurn1--;
             if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
             return;
@@ -171,7 +171,7 @@ public class GameDirector : MonoBehaviour
             if (player == Player.Player1) hand1.RemoveAt(0);
             else hand2.RemoveAt(0);
             CardVisualizer.visualizer.BurnCard(player);
-            CheckForWin();
+            //CheckForWin();
             cardsToBurn2--;
             if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
             return;
@@ -196,7 +196,7 @@ public class GameDirector : MonoBehaviour
                     else hand2.RemoveAt(0);
                     CardVisualizer.visualizer.BurnCard(player);
                     if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
-                    CheckForWin();
+                    //CheckForWin();
                     break;
                 case BurnType.manualBurn: //Player must burn a card as their next action
                     if (player == Player.Player1) cardsToBurn1++;
@@ -375,12 +375,14 @@ public class GameDirector : MonoBehaviour
         if (hand1.Count == 0) //Player 1 is out of cards, Player 2 wins
         {
             gameOver = true;
+            WinMenuManager.winMenu.TriggerWinScreen(Player.Player2);
             if (enableLogs) Debug.Log("Player2 won");
             return true;
         }
         else if (hand2.Count == 0) //Player 2 is out of cards, Player 1 wins
         {
             gameOver = true;
+            WinMenuManager.winMenu.TriggerWinScreen(Player.Player1);
             if (enableLogs) Debug.Log("Player1 won");
             return true;
         }

@@ -33,10 +33,12 @@ public class InputManager : MonoBehaviour
     private Transform pile;
     private Transform hand1;
     private Transform hand2;
+    private Transform pauseButton;
         //NOTE: Zones are used to determine whether a touch will initiate a card pick-up animation
     private Collider2D pileZone;
     private Collider2D hand1Zone;
     private Collider2D hand2Zone;
+    private Collider2D pauseZone;
         //NOTE: Places are used to determine where cards and decks will be rendered
     internal Transform pilePlace;
     internal Transform hand1Place;
@@ -64,9 +66,11 @@ public class InputManager : MonoBehaviour
         pile = transform.GetChild(0);
         hand1 = transform.GetChild(1);
         hand2 = transform.GetChild(2);
+        pauseButton = transform.GetChild(3);
         pileZone = pile.GetComponent<Collider2D>();
         hand1Zone = hand1.GetComponent<Collider2D>();
         hand2Zone = hand2.GetComponent<Collider2D>();
+        pauseZone = pauseButton.GetComponent<Collider2D>();
         pilePlace = pile.GetChild(0);
         hand1Place = hand1.GetChild(0);
         hand2Place = hand2.GetChild(0);
@@ -145,16 +149,40 @@ public class InputManager : MonoBehaviour
     //INPUT EVENTS:
     private void TouchStarted(TouchData data)
     {
-        //Process Card Visualization:
+        //Process Input Event:
+        if (WinMenuManager.winMenu.activated) //Use win menu inputs only
+        {
+            WinMenuManager.winMenu.ProcessInput(data);
+            return;
+        }
+        if (PauseManager.pauseManager.paused) //Use pause inputs only
+        {
+            PauseManager.pauseManager.ProcessInput(data); //Send all inputs to pause manager
+            return;
+        }
         if (ReadPositionAsZone(data.position) == Zone.Hand1 ||
             ReadPositionAsZone(data.position) == Zone.Hand2)
         {
             CardVisualizer.visualizer.HoldCard(data); //Indicate that a card has been picked up (but not played)
         }
+        else if (ReadPositionAsZone(data.position) == Zone.Pause)
+        {
+            if (CardVisualizer.visualizer.holdingCard1) CardVisualizer.visualizer.ReleaseCard(Player.Player1); //Make sure Player1 drops his/her card
+            if (CardVisualizer.visualizer.holdingCard2) CardVisualizer.visualizer.ReleaseCard(Player.Player2); //Make sure Player2 drops his/her card
+            PauseManager.pauseManager.TogglePause(true);
+        }
     }
     private void TouchMoved(TouchData data)
     {
         //Process Input Event:
+        if (WinMenuManager.winMenu.activated) //Use win menu inputs only
+        {
+            return;
+        }
+        if (PauseManager.pauseManager.paused) //Use pause inputs only
+        {
+            return;
+        }
         if (inputMode == InputMode.Swipe && //Only process inputs in this phase if swipes are enabled
             !data.markedComplete)           //Only consider this input if it hasn't already been used for a swipe
         {
@@ -194,6 +222,14 @@ public class InputManager : MonoBehaviour
     private void TouchEnded(TouchData data)
     {
         //Process Input Event:
+        if (WinMenuManager.winMenu.activated) //Use win menu inputs only
+        {
+            return;
+        }
+        if (PauseManager.pauseManager.paused) //Use pause inputs only
+        {
+            return;
+        }
         Zone endZone = ReadPositionAsZone(data.position);
         if (inputMode == InputMode.Drop) //Only process inputs in this phase if drag&drop is enabled
         {
@@ -238,6 +274,7 @@ public class InputManager : MonoBehaviour
         if (pileZone.bounds.Contains(realPosition)) return Zone.Pile;
         else if (hand1Zone.bounds.Contains(realPosition)) return Zone.Hand1;
         else if (hand2Zone.bounds.Contains(realPosition)) return Zone.Hand2;
+        else if (pauseZone.bounds.Contains(realPosition)) return Zone.Pause;
         else return Zone.None;
     }
     public Vector2 GetPositionFromZone(Zone zone)
