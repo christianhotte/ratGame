@@ -220,6 +220,9 @@ public class CardVisualizer : MonoBehaviour
         cardAvatar.floating = true;
         cardAvatar.held = true;
         RenderCardOnTopOfAll(cardAvatar); //Ensure card is rendered above the rest of the cards in the scene
+
+        //Play sound:
+        NoiseManager.noiseManager.PlaySound(0);
     }
     public void PlayCard(Player player)
     {

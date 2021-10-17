@@ -161,6 +161,7 @@ public class GameDirector : MonoBehaviour
             //CheckForWin();
             cardsToBurn1--;
             if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
+            NoiseManager.noiseManager.PlaySound(1);
             return;
         }
         else if (cardsToBurn2 > 0 && player == Player.Player2) //Player2 can burn a card
@@ -174,12 +175,14 @@ public class GameDirector : MonoBehaviour
             //CheckForWin();
             cardsToBurn2--;
             if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
+            NoiseManager.noiseManager.PlaySound(1);
             return;
         }
         else if (cardsToBurn1 > 0 || cardsToBurn2 > 0)
         {
             CardVisualizer.visualizer.ReleaseCard(player);
             if (enableLogs) Debug.Log("Someone's gotta burn a card(s)");
+            NoiseManager.noiseManager.PlaySound(3);
             return;
         }
 
@@ -196,16 +199,19 @@ public class GameDirector : MonoBehaviour
                     else hand2.RemoveAt(0);
                     CardVisualizer.visualizer.BurnCard(player);
                     if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
+                    NoiseManager.noiseManager.PlaySound(3);
                     //CheckForWin();
                     break;
                 case BurnType.manualBurn: //Player must burn a card as their next action
                     if (player == Player.Player1) cardsToBurn1++;
                     else cardsToBurn2++;
                     if (enableLogs) Debug.Log(player + " must burn a card");
+                    NoiseManager.noiseManager.PlaySound(3);
                     break;
                 case BurnType.noBurn: //Player cannot play card, but nothing is burned
                     CardVisualizer.visualizer.ReleaseCard(player);
                     if (enableLogs) Debug.Log(player + " tried to play a card out of turn");
+                    NoiseManager.noiseManager.PlaySound(3);
                     break;
             }
             return;
@@ -294,8 +300,9 @@ public class GameDirector : MonoBehaviour
             }
         }
 
-        //Visualize cards:
+        //Card Effects:
         CardVisualizer.visualizer.PlayCard(player);
+        NoiseManager.noiseManager.PlaySound(1);
     }
     public void CollectPile(Player player)
     {
@@ -328,15 +335,18 @@ public class GameDirector : MonoBehaviour
                     CardVisualizer.visualizer.BurnCard(player);
                     CheckForWin();
                     if (enableLogs) Debug.Log(player + " burned " + burnedCard.number + " of " + burnedCard.suit + "s");
+                    NoiseManager.noiseManager.PlaySound(3);
                     break;
                 case BurnType.manualBurn: //Player must burn a card
                     if (player == Player.Player1) cardsToBurn1++;
                     else cardsToBurn2++;
                     if (enableLogs) Debug.Log(player + " must burn a card");
+                    NoiseManager.noiseManager.PlaySound(3);
                     break;
                 case BurnType.noBurn: //Player cannot collect the pile, but does not have to burn a card
                     CardVisualizer.visualizer.ReleaseCard(player);
                     if (enableLogs) Debug.Log(player + " tried to play a card out of turn");
+                    NoiseManager.noiseManager.PlaySound(3);
                     break;
             }
             return;
@@ -362,8 +372,9 @@ public class GameDirector : MonoBehaviour
         }
         if (enableLogs) Debug.Log(player + " collected the pile");
 
-        //Visualize Collection:
+        //Effects:
         CardVisualizer.visualizer.CollectPile(player);
+        NoiseManager.noiseManager.PlaySound(2);
 
         //Check for win condition:
         CheckForWin();
