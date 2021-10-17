@@ -110,6 +110,9 @@ public class GameDirector : MonoBehaviour
                 hand2.Add(currentCard);
             }
         }
+
+        //Update UI:
+        GameUIManager.UIManager.UpdateUI();
     }
     private List<Card> ShuffleCards(List<Card> cards)
     {
@@ -162,6 +165,7 @@ public class GameDirector : MonoBehaviour
             cardsToBurn1--;
             if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
             NoiseManager.noiseManager.PlaySound(1);
+            GameUIManager.UIManager.UpdateUI();
             return;
         }
         else if (cardsToBurn2 > 0 && player == Player.Player2) //Player2 can burn a card
@@ -176,6 +180,7 @@ public class GameDirector : MonoBehaviour
             cardsToBurn2--;
             if (enableLogs) Debug.Log(player + " burned " + playedCard.number + " of " + playedCard.suit + "s");
             NoiseManager.noiseManager.PlaySound(1);
+            GameUIManager.UIManager.UpdateUI();
             return;
         }
         else if (cardsToBurn1 > 0 || cardsToBurn2 > 0)
@@ -214,6 +219,7 @@ public class GameDirector : MonoBehaviour
                     NoiseManager.noiseManager.PlaySound(3);
                     break;
             }
+            GameUIManager.UIManager.UpdateUI();
             return;
         }
 
@@ -300,9 +306,10 @@ public class GameDirector : MonoBehaviour
             }
         }
 
-        //Card Effects:
+        //Effects:
         CardVisualizer.visualizer.PlayCard(player);
         NoiseManager.noiseManager.PlaySound(1);
+        GameUIManager.UIManager.UpdateUI();
     }
     public void CollectPile(Player player)
     {
@@ -349,6 +356,7 @@ public class GameDirector : MonoBehaviour
                     NoiseManager.noiseManager.PlaySound(3);
                     break;
             }
+            GameUIManager.UIManager.UpdateUI();
             return;
         }
 
@@ -375,6 +383,7 @@ public class GameDirector : MonoBehaviour
         //Effects:
         CardVisualizer.visualizer.CollectPile(player);
         NoiseManager.noiseManager.PlaySound(2);
+        GameUIManager.UIManager.UpdateUI();
 
         //Check for win condition:
         CheckForWin();

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: testBatch
   m_EditorClassIdentifier: 
   cardFront: {fileID: 21300000, guid: 8c87d55cd1de7aa46bbcc0928031da33, type: 3}
-  cardBack: {fileID: 21300000, guid: 8a48bc0473545d04a9ec5c911ee03f1c, type: 3}
+  cardBack: {fileID: 21300000, guid: 41ac80bbbb9aa81449118ec54ef602ba, type: 3}
   suitIcons:
   - {fileID: 56302936136264637, guid: 34f778105eb5cb14a84d452f7be1a427, type: 3}
   - {fileID: -5541826874543358550, guid: 34f778105eb5cb14a84d452f7be1a427, type: 3}
